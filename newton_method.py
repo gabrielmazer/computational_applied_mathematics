@@ -26,6 +26,7 @@ def newton_method(x0, tol):
                 break
         else:
             parada = criterio_parada(x0_aux, x0)
+            print(f"cp: {parada}")
             if abs(fx0) < tol or parada  < tol:
                 break
         
