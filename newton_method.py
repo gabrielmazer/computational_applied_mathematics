@@ -1,11 +1,11 @@
 import numpy as np
 
 def f(x):
-    fx = round(3*(x**4) - x - 3, 4)
+    fx = round(2*np.cos(x) - ((np.e**x)/2), 4)
     return fx
 
 def df(x):
-    return round(12*(x**3) - 1, 4)
+    return round(-2*np.sin(x) - (1/2)*np.e**x, 4)
 
 def criterio_parada(x0, x1):
     if abs(x1) < 1:
@@ -38,6 +38,6 @@ def newton_method(x0, tol):
     print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
     return x0
 
-x0 = 1.5
+x0 = 1.9
 raiz = newton_method(x0, 1e-3)
 print("A raiz aproximada é:", raiz)
