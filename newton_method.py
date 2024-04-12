@@ -1,18 +1,18 @@
 import numpy as np
 
 def f(x):
-    fx = round(2*np.cos(x) - ((np.e**x)/2), 4)
+    fx = round(x**5 - (10/9)*x**3 + (5/21)*x, 5)
     return fx
 
 def df(x):
-    return round(-2*np.sin(x) - (1/2)*np.e**x, 4)
+    return round(5*x**4 - (10/3)*x**2 + 5/21, 5)
 
 def criterio_parada(x0, x1):
     if abs(x1) < 1:
         max = 1
     else:
         max = abs(x1)
-    return round((abs(x1-x0)/max), 4)
+    return round((abs(x1-x0)/max), 5)
 
 def newton_method(x0, tol):
     iteracao = 0
@@ -32,12 +32,12 @@ def newton_method(x0, tol):
         
         print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
         x0_aux = x0
-        x0 = round(x0 - fx0 / dfx0, 4)
+        x0 = round(x0 - fx0 / dfx0, 5)
         iteracao += 1
     
     print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
     return x0
 
-x0 = 1.9
-raiz = newton_method(x0, 1e-3)
+x0 = -0.85
+raiz = newton_method(x0, 1e-4)
 print("A raiz aproximada é:", raiz)
