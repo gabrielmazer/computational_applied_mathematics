@@ -1,7 +1,7 @@
 import numpy as np
 
 def f(x):
-    return x + 2*np.cos(x)
+    return 1 - (1+x)**-12 -x*8.5
 
 def bissecao(a, b, tol):
     iteracao = 0
@@ -24,6 +24,6 @@ def bissecao(a, b, tol):
     print(f"xm: {xm}  fxm: {fxm} \n\n")
     return xm
 
-# Intervalo [a, b] e precisão de 10^-2
-raiz = bissecao(-3, 0.5, 1e-2)
+# Intervalo [a, b] e precisão de 10^-3
+raiz = bissecao(0.04, 0.06, 1e-3)
 print("A raiz aproximada é:", raiz)

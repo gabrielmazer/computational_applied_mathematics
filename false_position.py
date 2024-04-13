@@ -14,9 +14,9 @@ def falsa_posicao(a, b, tol):
         if abs(fxm) < tol:
             break
         elif fa * fxm < 0:
-            b = xm
-        else:
             a = xm
+        else:
+            b = xm
         print(f"xm: {xm}   fxm: {fxm}\n\n")
         iteracao += 1
     
@@ -25,8 +25,8 @@ def falsa_posicao(a, b, tol):
     print(f"xm: {xm}   fxm: {fxm}\n\n")
     return xm
 
-# Intervalo [a, b] e precisão de 10^-3
+# Intervalo [a, b] e precisão de 10^-4
 a = -0.3
 b = 0.25
-raiz = falsa_posicao(a, b, 1e-3)
+raiz = falsa_posicao(a, b, 1e-4)
 print("A raiz aproximada é:", raiz)
