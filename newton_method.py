@@ -1,18 +1,18 @@
 import numpy as np
 
 def f(x):
-    fx = round(np.cos(x) + 1, 6)
+    fx = round("Sua função aqui", 4)
     return fx
 
 def df(x):
-    return round(-np.sin(x), 6)
+    return round("derivada da sua função aqui", 4)
 
 def criterio_parada(x0, x1):
     if abs(x1) < 1:
         max = 1
     else:
         max = abs(x1)
-    return round((abs(x1-x0)/max), 6)
+    return round((abs(x1-x0)/max), 4)
 
 def newton_method(x0, tol):
     iteracao = 0
@@ -32,12 +32,12 @@ def newton_method(x0, tol):
         
         print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
         x0_aux = x0
-        x0 = round(x0 - fx0 / dfx0, 6)
+        x0 = round(x0 - fx0 / dfx0, 4)
         iteracao += 1
     
     print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
     return x0
 
-x0 = 3.07
-raiz = newton_method(x0, 1e-5)
+x0 = #valor do x inicial
+raiz = newton_method(x0, 1e-3)
 print("A raiz aproximada é:", raiz)

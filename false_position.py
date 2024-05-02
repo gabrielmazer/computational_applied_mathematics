@@ -1,7 +1,7 @@
 import numpy as np
 
 def f(x):
-    return round(x**5 - (10/9)*x**3 + (5/21)*x, 4)
+    return round("Sua função aqui", 4)
 
 def falsa_posicao(a, b, tol):
     iteracao = 0
@@ -26,7 +26,7 @@ def falsa_posicao(a, b, tol):
     return xm
 
 # Intervalo [a, b] e precisão de 10^-4
-a = -0.3
-b = 0.25
+a = #valor de a
+b = #valor de b
 raiz = falsa_posicao(a, b, 1e-4)
 print("A raiz aproximada é:", raiz)
