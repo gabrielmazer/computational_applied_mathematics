@@ -91,12 +91,31 @@ def gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes):
 
     return x.tolist()
 
+def gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes):
+    A = np.array(matriz_coeficientes, dtype=float)
+    b = np.array(vetor_termos_independentes, dtype=float).reshape(ordem, 1)
+    
+    if np.linalg.det(A) == 0:
+        return "Erro: A matriz de coeficientes é singular e não pode ser utilizada no método de Gauss Jordan."
+    
+    aug_matriz = np.hstack((A, b))
+
+    for i in range(ordem):
+        aug_matriz[i] = aug_matriz[i] / aug_matriz[i, i]
+        for j in range(ordem):
+            if i != j:
+                aug_matriz[j] = aug_matriz[j] - aug_matriz[j, i] * aug_matriz[i]
+
+    x = aug_matriz[:, -1]
+    return np.round(x, 4).tolist()
+
 def main():
     continuar = True
     while continuar:
         escolha = input("Escolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
                         "(3) para sistema triangular superior\n(4) para decomposição LU\n"
-                        "(5) para Cholesky\n(6) para Gauss Compacto: ")
+                        "(5) para Cholesky\n(6) para Gauss Compacto\n(7) para Gauss Jordan: ")
+        
         if escolha == '1':
             ordem = int(input("Digite a ordem da matriz: "))
             matriz = []
@@ -104,6 +123,7 @@ def main():
                 linha = list(map(float, input(f"Digite a linha {i+1} da matriz: ").split()))
                 matriz.append(linha)
             print(f"Determinante: {calculo_determinante(ordem, matriz)}")
+ 
         elif escolha == '2':
             ordem = int(input("Digite a ordem do sistema: "))
             matriz_coeficientes = []
@@ -112,6 +132,7 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {sistema_triangular_inferior(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
         elif escolha == '3':
             ordem = int(input("Digite a ordem do sistema: "))
             matriz_coeficientes = []
@@ -120,6 +141,7 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {sistema_triangular_superior(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
         elif escolha == '4':
             ordem = int(input("Digite a ordem do sistema: "))
             matriz_coeficientes = []
@@ -128,6 +150,7 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {decomposicao_LU(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
         elif escolha == '5':
             ordem = int(input("Digite a ordem do sistema: "))
             matriz_coeficientes = []
@@ -136,6 +159,7 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {cholesky(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
         elif escolha == '6':
             ordem = int(input("Digite a ordem do sistema: "))
             matriz_coeficientes = []
@@ -144,6 +168,16 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
+        elif escolha == '7':
+            ordem = int(input("Digite a ordem do sistema: "))
+            matriz_coeficientes = []
+            for i in range(ordem):
+                linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
+                matriz_coeficientes.append(linha)
+            vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
+            print(f"Vetor solução: {gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        
         else:
             print("Opção inválida.")
         
