@@ -68,12 +68,35 @@ def cholesky(ordem, matriz_coeficientes, vetor_termos_independentes):
     x = np.linalg.solve(L.T, y)
     return [round(num, 4) for num in x.tolist()]
 
+def gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes):
+    A = np.array(matriz_coeficientes, float)
+    b = np.array(vetor_termos_independentes, float)
+
+    for i in range(ordem):
+        pivot = A[i][i]
+        for j in range(i, ordem):
+            A[i][j] /= pivot
+        b[i] /= pivot
+
+        for k in range(i+1, ordem):
+            fator = A[k][i]
+            for j in range(i, ordem):
+                A[k][j] -= fator * A[i][j]
+            b[k] -= fator * b[i]
+
+    x = np.zeros(ordem)
+    for i in range(ordem-1, -1, -1):
+        x[i] = b[i] - sum(A[i][j] * x[j] for j in range(i+1, ordem))
+        x[i] = round(x[i], 4)
+
+    return x.tolist()
+
 def main():
     continuar = True
     while continuar:
         escolha = input("Escolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
                         "(3) para sistema triangular superior\n(4) para decomposição LU\n"
-                        "(5) para Cholesky: ")
+                        "(5) para Cholesky\n(6) para Gauss Compacto: ")
         if escolha == '1':
             ordem = int(input("Digite a ordem da matriz: "))
             matriz = []
@@ -113,6 +136,14 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {cholesky(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+        elif escolha == '6':
+            ordem = int(input("Digite a ordem do sistema: "))
+            matriz_coeficientes = []
+            for i in range(ordem):
+                linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
+                matriz_coeficientes.append(linha)
+            vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
+            print(f"Vetor solução: {gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes)}")
         else:
             print("Opção inválida.")
         
