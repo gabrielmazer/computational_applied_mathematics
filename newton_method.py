@@ -38,6 +38,6 @@ def newton_method(x0, tol):
     print(f"iteração: {iteracao}\nxn: {x0}\nf(xn): {fx0}\n\n")
     return x0
 
-x0 = #valor do x inicial
+x0 = 1 #valor do x inicial
 raiz = newton_method(x0, 1e-3)
 print("A raiz aproximada é:", raiz)
