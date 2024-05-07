@@ -133,13 +133,35 @@ def jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, preci
     
     return np.round(x_novo, 4).tolist()
 
+def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
+    if not isinstance(ordem, int) or not isinstance(matriz_coeficientes, list) or not isinstance(vetor_termos_independentes, list) or not isinstance(aproximacao_inicial, list) or not isinstance(precisao, float) or not isinstance(max_iteracoes, int):
+        raise TypeError("Os parâmetros devem ser um inteiro (ordem), duas listas (matriz dos coeficientes e vetor dos termos independentes), um vetor (aproximação inicial), um real (precisão desejada), e um inteiro (número máximo de iterações).")
+    
+    if len(vetor_termos_independentes) != ordem or any(len(linha) != ordem for linha in matriz_coeficientes):
+        raise ValueError("A ordem do sistema e as dimensões da matriz e do vetor devem ser compatíveis.")
+    
+    x = np.array(aproximacao_inicial)
+    for k in range(max_iteracoes):
+        x_novo = np.copy(x)
+        for i in range(ordem):
+            s1 = sum(matriz_coeficientes[i][j] * x_novo[j] for j in range(i))
+            s2 = sum(matriz_coeficientes[i][j] * x[j] for j in range(i + 1, ordem))
+            x_novo[i] = (vetor_termos_independentes[i] - s1 - s2) / matriz_coeficientes[i][i]
+        
+        if np.allclose(x, x_novo, rtol=precisao):
+            return [round(num ,4 )for num in x_novo.tolist()], k+1
+        
+        x = np.copy(x_novo)
+    
+    return [round(num ,4 )for num in x.tolist()]
+
 def main():
     continuar = True
     while continuar:
         escolha = input("\nEscolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
                         "(3) para sistema triangular superior\n(4) para decomposição LU\n"
                         "(5) para Cholesky\n(6) para Gauss Compacto\n(7) para Gauss Jordan\n"
-                        "(8) para Jacobi: ")
+                        "(8) para Jacobi\n(9) para Gauss-Seidel: ")
         
         if escolha == '1':
             ordem = int(input("Digite a ordem da matriz: "))
@@ -203,7 +225,7 @@ def main():
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes)}")
 
-        elif escolha == '8':
+        elif escolha == '8' or escolha == '9':
             ordem = int(input("Digite a ordem do sistema: "))
             coeficientes = []
             for i in range(ordem):
@@ -213,7 +235,10 @@ def main():
             aproximacao_inicial = list(map(float, input("Digite o vetor de aproximação inicial: ").split()))
             precisao = float(input("Digite a precisão desejada: "))
             max_iteracoes = int(input("Digite o número máximo de iterações: "))
-            resultado = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+            if escolha == '8':
+                resultado = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+            elif escolha == '9':
+                resultado = gauss_seidel(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
             print(f"Vetor solução: {resultado}")
 
         else:
