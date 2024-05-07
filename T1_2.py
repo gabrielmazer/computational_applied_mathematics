@@ -109,12 +109,37 @@ def gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes):
     x = aug_matriz[:, -1]
     return np.round(x, 4).tolist()
 
+def jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
+    A = np.array(coeficientes, dtype=float)
+
+    if not np.all(np.abs(A.diagonal()) > np.sum(np.abs(A), axis=1) - np.abs(A.diagonal())):
+        return "Erro: A matriz de coeficientes não é estritamente diagonal dominante."
+    
+    if len(aproximacao_inicial) != ordem:
+        return "Erro: O vetor de aproximação inicial deve ter o mesmo número de elementos que a ordem do sistema."
+    
+    x = np.array(aproximacao_inicial, dtype=float)
+    x_novo = np.copy(x)
+    
+    for _ in range(max_iteracoes):
+        for i in range(ordem):
+            soma = sum(coeficientes[i][j] * x[j] for j in range(ordem) if j != i)
+            x_novo[i] = (termos_independentes[i] - soma) / coeficientes[i][i]
+        
+        if np.allclose(x, x_novo, atol=precisao):
+            return np.round(x_novo, 4).tolist()
+        
+        x = np.copy(x_novo)
+    
+    return np.round(x_novo, 4).tolist()
+
 def main():
     continuar = True
     while continuar:
-        escolha = input("Escolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
+        escolha = input("\nEscolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
                         "(3) para sistema triangular superior\n(4) para decomposição LU\n"
-                        "(5) para Cholesky\n(6) para Gauss Compacto\n(7) para Gauss Jordan: ")
+                        "(5) para Cholesky\n(6) para Gauss Compacto\n(7) para Gauss Jordan\n"
+                        "(8) para Jacobi: ")
         
         if escolha == '1':
             ordem = int(input("Digite a ordem da matriz: "))
@@ -177,7 +202,20 @@ def main():
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
             print(f"Vetor solução: {gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes)}")
-        
+
+        elif escolha == '8':
+            ordem = int(input("Digite a ordem do sistema: "))
+            coeficientes = []
+            for i in range(ordem):
+                linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
+                coeficientes.append(linha)
+            termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
+            aproximacao_inicial = list(map(float, input("Digite o vetor de aproximação inicial: ").split()))
+            precisao = float(input("Digite a precisão desejada: "))
+            max_iteracoes = int(input("Digite o número máximo de iterações: "))
+            resultado = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+            print(f"Vetor solução: {resultado}")
+
         else:
             print("Opção inválida.")
         
