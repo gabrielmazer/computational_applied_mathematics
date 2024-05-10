@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.linalg import lu, inv
 
 def calculo_determinante(ordem, matriz):
     if not isinstance(ordem, int) or not isinstance(matriz, list):
@@ -133,14 +134,8 @@ def jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, preci
     
     return np.round(x_novo, 4).tolist()
 
-def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
-    if not isinstance(ordem, int) or not isinstance(matriz_coeficientes, list) or not isinstance(vetor_termos_independentes, list) or not isinstance(aproximacao_inicial, list) or not isinstance(precisao, float) or not isinstance(max_iteracoes, int):
-        raise TypeError("Os parâmetros devem ser um inteiro (ordem), duas listas (matriz dos coeficientes e vetor dos termos independentes), um vetor (aproximação inicial), um real (precisão desejada), e um inteiro (número máximo de iterações).")
-    
-    if len(vetor_termos_independentes) != ordem or any(len(linha) != ordem for linha in matriz_coeficientes):
-        raise ValueError("A ordem do sistema e as dimensões da matriz e do vetor devem ser compatíveis.")
-    
-    x = np.array(aproximacao_inicial)
+def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproximacao_inicial, precisao, max_iteracoes):    
+    x = np.array(aproximacao_inicial, dtype=float)
     for k in range(max_iteracoes):
         x_novo = np.copy(x)
         for i in range(ordem):
@@ -148,12 +143,34 @@ def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproxim
             s2 = sum(matriz_coeficientes[i][j] * x[j] for j in range(i + 1, ordem))
             x_novo[i] = (vetor_termos_independentes[i] - s1 - s2) / matriz_coeficientes[i][i]
         
-        if np.allclose(x, x_novo, rtol=precisao):
-            return [round(num ,4 )for num in x_novo.tolist()], k+1
+        if np.linalg.norm(x - x_novo, ord=np.inf) < precisao:
+            return x_novo, k+1
         
-        x = np.copy(x_novo)
+        x = x_novo
     
-    return [round(num ,4 )for num in x.tolist()]
+    return x, k
+
+def matriz_inversa(ordem, matriz, metodo):
+    if not isinstance(ordem, int) or not isinstance(matriz, list):
+        raise TypeError("Os parâmetros devem ser um inteiro e uma lista, respectivamente.")
+    if ordem != len(matriz) or any(len(linha) != ordem for linha in matriz):
+        raise ValueError("A matriz deve ser quadrada e corresponder à ordem especificada.")
+
+    matriz_np = np.array(matriz)
+    if matriz_np.shape[0] != matriz_np.shape[1]:
+        raise ValueError("A matriz não é quadrada.")
+
+    if metodo == 'LU':
+        P, L, U = lu(matriz_np)
+        if np.linalg.det(U) == 0:
+            return "Erro: A matriz de coeficientes é singular e não pode ser decomposta."
+        inversa = inv(U) @ inv(L) @ P.T
+    elif metodo == 'Gauss':
+        inversa = inv(matriz_np)
+    else:
+        raise ValueError("Método inválido. Escolha 'LU' ou 'Gauss'.")
+
+    return np.round(inversa, 4).tolist()
 
 def main():
     continuar = True
@@ -161,7 +178,7 @@ def main():
         escolha = input("\nEscolha o método:\n(1) para determinante\n(2) para sistema triangular inferior\n"
                         "(3) para sistema triangular superior\n(4) para decomposição LU\n"
                         "(5) para Cholesky\n(6) para Gauss Compacto\n(7) para Gauss Jordan\n"
-                        "(8) para Jacobi\n(9) para Gauss-Seidel: ")
+                        "(8) para Jacobi\n(9) para Gauss-Seidel\n(10) para matriz inversa: ")
         
         if escolha == '1':
             ordem = int(input("Digite a ordem da matriz: "))
@@ -238,8 +255,18 @@ def main():
             if escolha == '8':
                 resultado = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
             elif escolha == '9':
-                resultado = gauss_seidel(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
-            print(f"Vetor solução: {resultado}")
+                resultado, iteracoes = gauss_seidel(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+                resultado_formatado = [f"{num:.4f}" for num in resultado]
+                print("Vetor solução: [" + ", ".join(resultado_formatado) + f"], Iterações: {iteracoes}")
+
+        elif escolha == '10':
+            ordem = int(input("Digite a ordem da matriz: "))
+            matriz = []
+            for i in range(ordem):
+                linha = list(map(float, input(f"Digite a linha {i+1} da matriz: ").split()))
+                matriz.append(linha)
+            metodo = input("Escolha o método ('LU' ou 'Gauss'): ")
+            print(f"Matriz inversa: {matriz_inversa(ordem, matriz, metodo)}")
 
         else:
             print("Opção inválida.")
