@@ -1,17 +1,32 @@
-import numpy as np
-from scipy.linalg import lu, inv
-
-def calculo_determinante(ordem, matriz):
-    if not isinstance(ordem, int) or not isinstance(matriz, list):
-        raise TypeError("Os parâmetros devem ser um inteiro e uma lista, respectivamente.")
-    if ordem != len(matriz) or any(len(linha) != ordem for linha in matriz):
-        raise ValueError("A matriz deve ser quadrada e corresponder à ordem especificada.")
+def calculo_determinante(matriz):
+    if not all(len(linha) == len(matriz) for linha in matriz):
+        raise ValueError("A matriz deve ser quadrada.")
     
-    matriz_np = np.array(matriz)
-    if matriz_np.shape[0] != matriz_np.shape[1]:
-        raise ValueError("A matriz não é quadrada.")
+    n = len(matriz)
+    det = 1
     
-    return round(np.linalg.det(matriz_np), 4)
+    for i in range(n):
+        maxElem = abs(matriz[i][i])
+        maxRow = i
+        for k in range(i+1, n):
+            if abs(matriz[k][i]) > maxElem:
+                maxElem = abs(matriz[k][i])
+                maxRow = k
+        
+        matriz[maxRow], matriz[i] = matriz[i], matriz[maxRow]
+        
+        if matriz[i][i] == 0:
+            return 0
+        
+        det *= matriz[i][i]
+        
+        for k in range(i+1, n):
+            c = -matriz[k][i] / matriz[i][i]
+            for j in range(i, n):
+                if i == j:
+                    matriz[k][j] = 0
+                else:
+                    matriz[k][j] += c * matriz[i][j]
 
 def sistema_triangular_inferior(ordem, matriz_coeficientes, vetor_termos_independentes):
     if not isinstance(ordem, int) or not isinstance(matriz_coeficientes, list) or not isinstance(vetor_termos_independentes, list):
@@ -40,38 +55,61 @@ def sistema_triangular_superior(ordem, matriz_coeficientes, vetor_termos_indepen
     return vetor_solucao
 
 def decomposicao_LU(ordem, matriz_coeficientes, vetor_termos_independentes):
-    if np.linalg.det(matriz_coeficientes) == 0:
+    if calculo_determinante(matriz_coeficientes) == 0:
         return "Erro: A matriz de coeficientes é singular e não pode ser decomposta."
-    L = np.zeros((ordem, ordem))
-    U = np.zeros((ordem, ordem))
+    
+    L = [[0.0] * ordem for _ in range(ordem)]
+    U = [[0.0] * ordem for _ in range(ordem)]
+    
     for i in range(ordem):
         for j in range(i, ordem):
-            U[i, j] = matriz_coeficientes[i][j] - sum(L[i, k] * U[k, j] for k in range(i))
+            U[i][j] = matriz_coeficientes[i][j] - sum(L[i][k] * U[k][j] for k in range(i))
+        
         for j in range(i, ordem):
             if i == j:
-                L[i, i] = 1
+                L[i][i] = 1
             else:
-                L[j, i] = (matriz_coeficientes[j][i] - sum(L[j, k] * U[k, i] for k in range(i))) / U[i, i]
+                L[j][i] = (matriz_coeficientes[j][i] - sum(L[j][k] * U[k][i] for k in range(i))) / U[i][i]
     
-    y = np.zeros(ordem)
+    y = [0.0] * ordem
     for i in range(ordem):
-        y[i] = vetor_termos_independentes[i] - sum(L[i, j] * y[j] for j in range(i))
+        y[i] = vetor_termos_independentes[i] - sum(L[i][j] * y[j] for j in range(i))
     
-    x = np.zeros(ordem)
+    x = [0.0] * ordem
     for i in reversed(range(ordem)):
-        x[i] = (y[i] - sum(U[i, j] * x[j] for j in range(i+1, ordem))) / U[i, i]
+        x[i] = (y[i] - sum(U[i][j] * x[j] for j in range(i+1, ordem))) / U[i][i]
     
-    return [round(num, 4) for num in x.tolist()]
+    return [round(num, 4) for num in x]
 
 def cholesky(ordem, matriz_coeficientes, vetor_termos_independentes):
-    L = np.linalg.cholesky(matriz_coeficientes)
-    y = np.linalg.solve(L, vetor_termos_independentes)
-    x = np.linalg.solve(L.T, y)
-    return [round(num, 4) for num in x.tolist()]
+    for i in range(ordem):
+        for j in range(i):
+            if matriz_coeficientes[i][j] != matriz_coeficientes[j][i]:
+                return "Erro: A matriz de coeficientes deve ser simétrica e positiva definida."
+    
+    L = [[0.0] * ordem for _ in range(ordem)]
+    
+    for i in range(ordem):
+        for j in range(i+1):
+            soma = sum(L[i][k] * L[j][k] for k in range(j))
+            if i == j: 
+                L[i][j] = (matriz_coeficientes[i][i] - soma) ** 0.5
+            else:
+                L[i][j] = (1.0 / L[j][j] * (matriz_coeficientes[i][j] - soma))
+    
+    y = [0.0] * ordem
+    for i in range(ordem):
+        y[i] = (vetor_termos_independentes[i] - sum(L[i][j] * y[j] for j in range(i))) / L[i][i]
+    
+    x = [0.0] * ordem
+    for i in reversed(range(ordem)):
+        x[i] = (y[i] - sum(L[j][i] * x[j] for j in range(i+1, ordem))) / L[i][i]
+    
+    return [round(num, 4) for num in x]
 
 def gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes):
-    A = np.array(matriz_coeficientes, float)
-    b = np.array(vetor_termos_independentes, float)
+    A = [list(map(float, linha)) for linha in matriz_coeficientes]
+    b = list(map(float, vetor_termos_independentes))
 
     for i in range(ordem):
         pivot = A[i][i]
@@ -85,68 +123,69 @@ def gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes):
                 A[k][j] -= fator * A[i][j]
             b[k] -= fator * b[i]
 
-    x = np.zeros(ordem)
+    x = [0.0 for _ in range(ordem)]
     for i in range(ordem-1, -1, -1):
         x[i] = b[i] - sum(A[i][j] * x[j] for j in range(i+1, ordem))
         x[i] = round(x[i], 4)
 
-    return x.tolist()
+    return x
 
 def gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes):
-    A = np.array(matriz_coeficientes, dtype=float)
-    b = np.array(vetor_termos_independentes, dtype=float).reshape(ordem, 1)
-    
-    if np.linalg.det(A) == 0:
+    if calculo_determinante(matriz_coeficientes) == 0:
         return "Erro: A matriz de coeficientes é singular e não pode ser utilizada no método de Gauss Jordan."
     
-    aug_matriz = np.hstack((A, b))
-
+    aug_matriz = [linha + [vetor_termos_independentes[i]] for i, linha in enumerate(matriz_coeficientes)]
+    
     for i in range(ordem):
-        aug_matriz[i] = aug_matriz[i] / aug_matriz[i, i]
-        for j in range(ordem):
-            if i != j:
-                aug_matriz[j] = aug_matriz[j] - aug_matriz[j, i] * aug_matriz[i]
-
-    x = aug_matriz[:, -1]
-    return np.round(x, 4).tolist()
+        pivot = aug_matriz[i][i]
+        for j in range(ordem + 1):
+            aug_matriz[i][j] /= pivot
+        
+        for k in range(ordem):
+            if i != k:
+                fator = aug_matriz[k][i]
+                for j in range(ordem + 1):
+                    aug_matriz[k][j] -= fator * aug_matriz[i][j]
+    
+    x = [round(linha[-1], 4) for linha in aug_matriz]
+    return x
 
 def jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
-    A = np.array(coeficientes, dtype=float)
-
-    if not np.all(np.abs(A.diagonal()) > np.sum(np.abs(A), axis=1) - np.abs(A.diagonal())):
-        return "Erro: A matriz de coeficientes não é estritamente diagonal dominante."
+    for i in range(ordem):
+        if abs(coeficientes[i][i]) <= sum(abs(coeficientes[i][j]) for j in range(ordem) if j != i):
+            return "Erro: A matriz de coeficientes não é estritamente diagonal dominante."
     
     if len(aproximacao_inicial) != ordem:
         return "Erro: O vetor de aproximação inicial deve ter o mesmo número de elementos que a ordem do sistema."
     
-    x = np.array(aproximacao_inicial, dtype=float)
-    x_novo = np.copy(x)
+    x = aproximacao_inicial[:]
+    x_novo = x[:]
     
-    for _ in range(max_iteracoes):
+    for iteracao in range(max_iteracoes):
         for i in range(ordem):
             soma = sum(coeficientes[i][j] * x[j] for j in range(ordem) if j != i)
             x_novo[i] = (termos_independentes[i] - soma) / coeficientes[i][i]
         
-        if np.allclose(x, x_novo, atol=precisao):
-            return np.round(x_novo, 4).tolist()
+        if all(abs(x_novo[i] - x[i]) < precisao for i in range(ordem)):
+            return [round(num, 4) for num in x_novo], iteracao + 1
         
-        x = np.copy(x_novo)
+        x = x_novo[:]
     
-    return np.round(x_novo, 4).tolist()
+    return [round(num, 4) for num in x_novo], max_iteracoes
 
-def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproximacao_inicial, precisao, max_iteracoes):    
-    x = np.array(aproximacao_inicial, dtype=float)
+def gauss_seidel(ordem, matriz_coeficientes, vetor_termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
+    x = aproximacao_inicial[:]
     for k in range(max_iteracoes):
-        x_novo = np.copy(x)
+        x_novo = x[:]
         for i in range(ordem):
             s1 = sum(matriz_coeficientes[i][j] * x_novo[j] for j in range(i))
             s2 = sum(matriz_coeficientes[i][j] * x[j] for j in range(i + 1, ordem))
             x_novo[i] = (vetor_termos_independentes[i] - s1 - s2) / matriz_coeficientes[i][i]
         
-        if np.linalg.norm(x - x_novo, ord=np.inf) < precisao:
+        if all(abs(x_novo[i] - x[i]) < precisao for i in range(ordem)):
             return x_novo, k+1
         
-        x = x_novo
+        x = x_novo[:]
     
     return x, k
 
@@ -156,21 +195,33 @@ def matriz_inversa(ordem, matriz, metodo):
     if ordem != len(matriz) or any(len(linha) != ordem for linha in matriz):
         raise ValueError("A matriz deve ser quadrada e corresponder à ordem especificada.")
 
-    matriz_np = np.array(matriz)
-    if matriz_np.shape[0] != matriz_np.shape[1]:
-        raise ValueError("A matriz não é quadrada.")
+    if calculo_determinante(matriz) == 0:
+        return "Erro: A matriz de coeficientes é singular e não pode ser decomposta."
+
+    inversa = []
 
     if metodo == 'LU':
-        P, L, U = lu(matriz_np)
-        if np.linalg.det(U) == 0:
-            return "Erro: A matriz de coeficientes é singular e não pode ser decomposta."
-        inversa = inv(U) @ inv(L) @ P.T
+        for i in range(ordem):
+            vetor_termos_independentes = [0] * ordem
+            vetor_termos_independentes[i] = 1
+            coluna_inversa = decomposicao_LU(ordem, matriz, vetor_termos_independentes)
+            inversa.append(coluna_inversa)
+
     elif metodo == 'Gauss':
-        inversa = inv(matriz_np)
+        for i in range(ordem):
+            vetor_termos_independentes = [0] * ordem
+            vetor_termos_independentes[i] = 1
+            coluna_inversa = gauss_compacto(ordem, matriz, vetor_termos_independentes)
+            inversa.append(coluna_inversa)
+
     else:
         raise ValueError("Método inválido. Escolha 'LU' ou 'Gauss'.")
 
-    return np.round(inversa, 4).tolist()
+    inversa_transposta = []
+    for i in range(ordem):
+        inversa_transposta.append([coluna[i] for coluna in inversa])
+
+    return inversa_transposta
 
 def main():
     continuar = True
@@ -213,7 +264,12 @@ def main():
                 linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
-            print(f"Vetor solução: {decomposicao_LU(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+            
+            solucao = decomposicao_LU(ordem, matriz_coeficientes, vetor_termos_independentes)
+            if isinstance(solucao, str):
+                print(solucao)
+            else:
+                print(f"Vetor solução: {solucao}")
         
         elif escolha == '5':
             ordem = int(input("Digite a ordem do sistema: "))
@@ -222,7 +278,12 @@ def main():
                 linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
-            print(f"Vetor solução: {cholesky(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+            
+            solucao = cholesky(ordem, matriz_coeficientes, vetor_termos_independentes)
+            if isinstance(solucao, str):
+                print(solucao)
+            else:
+                print(f"Vetor solução: {solucao}")
         
         elif escolha == '6':
             ordem = int(input("Digite a ordem do sistema: "))
@@ -231,7 +292,9 @@ def main():
                 linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
-            print(f"Vetor solução: {gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+            
+            solucao = gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes)
+            print(f"Vetor solução: {solucao}")
         
         elif escolha == '7':
             ordem = int(input("Digite a ordem do sistema: "))
@@ -240,7 +303,12 @@ def main():
                 linha = list(map(float, input(f"Digite a linha {i+1} dos coeficientes: ").split()))
                 matriz_coeficientes.append(linha)
             vetor_termos_independentes = list(map(float, input("Digite o vetor de termos independentes: ").split()))
-            print(f"Vetor solução: {gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes)}")
+            
+            solucao = gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes)
+            if isinstance(solucao, str):
+                print(solucao)
+            else:
+                print(f"Vetor solução: {solucao}")
 
         elif escolha == '8' or escolha == '9':
             ordem = int(input("Digite a ordem do sistema: "))
@@ -253,7 +321,9 @@ def main():
             precisao = float(input("Digite a precisão desejada: "))
             max_iteracoes = int(input("Digite o número máximo de iterações: "))
             if escolha == '8':
-                resultado = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+                resultado, iteracoes = jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
+                resultado_formatado = [f"{num:.4f}" for num in resultado]
+                print("Vetor solução: [" + ", ".join(resultado_formatado) + f"], Iterações: {iteracoes}")
             elif escolha == '9':
                 resultado, iteracoes = gauss_seidel(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes)
                 resultado_formatado = [f"{num:.4f}" for num in resultado]
