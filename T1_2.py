@@ -13,7 +13,9 @@ def calculo_determinante(matriz):
                 maxElem = abs(matriz[k][i])
                 maxRow = k
         
-        matriz[maxRow], matriz[i] = matriz[i], matriz[maxRow]
+        if i != maxRow:
+            matriz[i], matriz[maxRow] = matriz[maxRow], matriz[i]
+            det *= -1 
         
         if matriz[i][i] == 0:
             return 0
@@ -27,6 +29,8 @@ def calculo_determinante(matriz):
                     matriz[k][j] = 0
                 else:
                     matriz[k][j] += c * matriz[i][j]
+    
+    return det
 
 def sistema_triangular_inferior(ordem, matriz_coeficientes, vetor_termos_independentes):
     if not isinstance(ordem, int) or not isinstance(matriz_coeficientes, list) or not isinstance(vetor_termos_independentes, list):
@@ -237,7 +241,7 @@ def main():
             for i in range(ordem):
                 linha = list(map(float, input(f"Digite a linha {i+1} da matriz: ").split()))
                 matriz.append(linha)
-            print(f"Determinante: {calculo_determinante(ordem, matriz)}")
+            print(f"Determinante: {calculo_determinante(matriz)}")
  
         elif escolha == '2':
             ordem = int(input("Digite a ordem do sistema: "))
