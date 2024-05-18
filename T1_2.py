@@ -38,6 +38,11 @@ def sistema_triangular_inferior(ordem, matriz_coeficientes, vetor_termos_indepen
     if len(vetor_termos_independentes) != ordem or any(len(linha) != ordem for linha in matriz_coeficientes):
         raise ValueError("A ordem do sistema e as dimensões da matriz e do vetor devem ser compatíveis.")
     
+    for i in range(ordem):
+        for j in range(i+1, ordem):
+            if matriz_coeficientes[i][j] != 0:
+                raise ValueError("A matriz de coeficientes não é triangular inferior.")
+    
     vetor_solucao = [0] * ordem
     for i in range(ordem):
         soma = sum(matriz_coeficientes[i][j] * vetor_solucao[j] for j in range(i))
@@ -51,6 +56,11 @@ def sistema_triangular_superior(ordem, matriz_coeficientes, vetor_termos_indepen
     if len(vetor_termos_independentes) != ordem or any(len(linha) != ordem for linha in matriz_coeficientes):
         raise ValueError("A ordem do sistema e as dimensões da matriz e do vetor devem ser compatíveis.")
     
+    for i in range(1, ordem):
+        for j in range(i):
+            if matriz_coeficientes[j][i] != 0:
+                raise ValueError("A matriz de coeficientes não é triangular superior.")
+    
     vetor_solucao = [0] * ordem
     for i in range(ordem-1, -1, -1):
         soma = sum(matriz_coeficientes[i][j] * vetor_solucao[j] for j in range(i+1, ordem))
@@ -59,29 +69,30 @@ def sistema_triangular_superior(ordem, matriz_coeficientes, vetor_termos_indepen
     return vetor_solucao
 
 def decomposicao_LU(ordem, matriz_coeficientes, vetor_termos_independentes):
-    if calculo_determinante(matriz_coeficientes) == 0:
-        return "Erro: A matriz de coeficientes é singular e não pode ser decomposta."
-    
     L = [[0.0] * ordem for _ in range(ordem)]
     U = [[0.0] * ordem for _ in range(ordem)]
     
     for i in range(ordem):
         for j in range(i, ordem):
-            U[i][j] = matriz_coeficientes[i][j] - sum(L[i][k] * U[k][j] for k in range(i))
+            soma = sum(L[i][k] * U[k][j] for k in range(i))
+            U[i][j] = matriz_coeficientes[i][j] - soma
         
         for j in range(i, ordem):
             if i == j:
                 L[i][i] = 1
             else:
-                L[j][i] = (matriz_coeficientes[j][i] - sum(L[j][k] * U[k][i] for k in range(i))) / U[i][i]
+                soma = sum(L[j][k] * U[k][i] for k in range(i))
+                L[j][i] = (matriz_coeficientes[j][i] - soma) / U[i][i]
     
     y = [0.0] * ordem
     for i in range(ordem):
-        y[i] = vetor_termos_independentes[i] - sum(L[i][j] * y[j] for j in range(i))
+        soma = sum(L[i][j] * y[j] for j in range(i))
+        y[i] = vetor_termos_independentes[i] - soma
     
     x = [0.0] * ordem
     for i in reversed(range(ordem)):
-        x[i] = (y[i] - sum(U[i][j] * x[j] for j in range(i+1, ordem))) / U[i][i]
+        soma = sum(U[i][j] * x[j] for j in range(i+1, ordem))
+        x[i] = (y[i] - soma) / U[i][i]
     
     return [round(num, 4) for num in x]
 
@@ -135,13 +146,13 @@ def gauss_compacto(ordem, matriz_coeficientes, vetor_termos_independentes):
     return x
 
 def gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes):
-    if calculo_determinante(matriz_coeficientes) == 0:
-        return "Erro: A matriz de coeficientes é singular e não pode ser utilizada no método de Gauss Jordan."
-    
     aug_matriz = [linha + [vetor_termos_independentes[i]] for i, linha in enumerate(matriz_coeficientes)]
     
     for i in range(ordem):
         pivot = aug_matriz[i][i]
+        if pivot == 0:
+            return "Erro: Pivô zero encontrado, o método de Gauss Jordan não pode prosseguir."
+        
         for j in range(ordem + 1):
             aug_matriz[i][j] /= pivot
         
@@ -151,7 +162,7 @@ def gauss_jordan(ordem, matriz_coeficientes, vetor_termos_independentes):
                 for j in range(ordem + 1):
                     aug_matriz[k][j] -= fator * aug_matriz[i][j]
     
-    x = [round(linha[-1], 4) for linha in aug_matriz]
+    x = [linha[-1] for linha in aug_matriz]
     return x
 
 def jacobi(ordem, coeficientes, termos_independentes, aproximacao_inicial, precisao, max_iteracoes):
